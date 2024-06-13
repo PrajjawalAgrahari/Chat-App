@@ -8,7 +8,7 @@ const Chat = () => {
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
   const [selectedPerson, setSelectedPerson] = useState(null);
-  const {username} = useContext(UserContext)
+  const { username, id } = useContext(UserContext);
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:3000");
@@ -31,27 +31,40 @@ const Chat = () => {
     }
   }
 
+  const onlinePeopleExcludeMe = { ...onlinePeople };
+  delete onlinePeopleExcludeMe[id];
+
   return (
     <div className="flex h-screen">
       <div className="bg-white w-1/3">
         <Logo />
-        {username}
-        {Object.keys(onlinePeople).map((userId) => (
+        {Object.keys(onlinePeopleExcludeMe).map((userId) => (
           <div
             key={userId}
             onClick={() => setSelectedPerson(userId)}
             className={
-              "py-2 border-b border-gray-100 pl-4 flex items-center gap-3 cursor-pointer" +
+              " border-b border-gray-100  flex items-center gap-3 cursor-pointer" +
               (selectedPerson === userId ? " bg-blue-50" : "")
             }
           >
-            <Avatar username={onlinePeople[userId]} userId={userId} />
-            <span className="text-gray-700">{onlinePeople[userId]}</span>
+            {userId === selectedPerson && (
+              <div className="w-1 h-12 bg-blue-500 rounded-r-md"></div>
+            )}
+            <div className="flex gap-3 py-2 pl-4 items-center">
+              <Avatar username={onlinePeople[userId]} userId={userId} />
+              <span className="text-gray-700">{onlinePeople[userId]}</span>
+            </div>
           </div>
         ))}
       </div>
       <div className="flex flex-col bg-blue-50 w-2/3 p-2">
-        <div className="flex-grow">messages with selected person</div>
+        <div className="flex-grow">
+          {!selectedPerson && (
+            <div className=" text-gray-400 flex flex-grow items-center justify-center h-full">
+              &larr; Select a person to chat
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
           <input
             type="text"
