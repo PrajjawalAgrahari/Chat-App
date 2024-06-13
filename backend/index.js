@@ -7,9 +7,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const ws = require('ws');
-
 dotenv.config();
-
 const app = express();
 app.use(cors({
     credentials: true,
@@ -17,18 +15,14 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-
 mongoose.connect("mongodb://localhost:27017/company", { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
-
 const port = 3000;
 const bcryptSalt = bcrypt.genSaltSync(10);
-
 app.get('/test', (req, res) => {
     res.send('test ok');
 });
-
 app.get('/profile', (req, res) => {
     const { token } = req.cookies;
     jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
@@ -38,11 +32,9 @@ app.get('/profile', (req, res) => {
         res.json(userData);
     });
 });
-
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const foundUser = await User.findOne
-        ({ username });
+    const foundUser = await User.findOne({ username });
     if (foundUser) {
         const isPasswordCorrect = bcrypt.compareSync(password, foundUser.password);
         if (isPasswordCorrect) {
@@ -59,7 +51,6 @@ app.post('/login', async (req, res) => {
         }
     }
 });
-
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -80,18 +71,82 @@ app.post('/register', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
 const server = app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
-
 const wss = new ws.WebSocketServer({ server });
 wss.on('connection', (connection, req) => {
     const cookies = req.headers.cookie;
     if (cookies) {
-
-        cookies.split(';').find(str => {
-            str.startsWith('token=');
-        })
+        const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+        if (tokenCookieString) {
+            const token = tokenCookieString.split('=')[1];
+            jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+                if (err) {
+                    return connection.close(1008, 'Token verification failed');
+                }
+                connection.username = userData.username;
+                connection.userId = userData.userId;
+            });
+        }
     }
+});
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+        const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+        if (tokenCookieString) {
+            const token = tokenCookieString.split('=')[1];
+            jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+                if (err) {
+                    return connection.close(1008, 'Token verification failed');
+                }
+                connection.username = userData.username;
+                connection.userId = userData.userId;
+            });
+        }
+    }
+});
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+        const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+        if (tokenCookieString) {
+            const token = tokenCookieString.split('=')[1];
+            jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+                if (err) {
+                    return connection.close(1008, 'Token verification failed');
+                }
+                connection.username = userData.username;
+                connection.userId = userData.userId;
+            });
+        }
+    }
+});
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+        const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+        if (tokenCookieString) {
+            const token = tokenCookieString.split('=')[1];
+            jwt.verify(token, process.env.JWT_SECRET, {}, async (err, userData) => {
+                if (err) {
+                    return connection.close(1008, 'Token verification failed');
+                }
+                connection.username = userData.username;
+                connection.userId = userData.userId;
+            });
+        }
+    }
+    [...wss.clients].forEach(client => {
+        client.send(JSON.stringify(
+            {
+                online: [...wss.clients].map(client => ({
+                    userId: client.userId,
+                    username: client.username
+                }))
+            }
+
+        ));
+    })
 });
