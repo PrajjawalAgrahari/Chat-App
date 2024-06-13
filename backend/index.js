@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
+const ws = require('ws');
 
 dotenv.config();
 
@@ -80,6 +81,17 @@ app.post('/register', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
+});
+
+const wss = new ws.WebSocketServer({ server });
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+
+        cookies.split(';').find(str => {
+            str.startsWith('token=');
+        })
+    }
 });
